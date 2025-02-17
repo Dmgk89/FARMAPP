@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Farm Management System</title>
+  <!-- Firebase App (the core Firebase SDK) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <!-- Firebase Firestore -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+    }
+    input, textarea, button {
+      display: block;
+      margin: 10px 0;
+      width: 100%;
+      padding: 8px;
+      font-size: 1em;
+    }
+    label {
+      font-weight: bold;
+      margin-top: 15px;
+    }
+    button.get-location {
+      width: auto;
+      display: inline-block;
+      margin-top: -5px;
+      margin-bottom: 15px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Farm Management System</h1>
+  <form id="farmForm">
+    <label for="feedstock">Feedstock of Biochar Production:</label>
+    <input type="text" id="feedstock" required />
+
+    <label for="technology">Technology of Production:</label>
+    <input type="text" id="technology" required />
+
+    <label for="prodDate">Date of Production:</label>
+    <input type="date" id="prodDate" required />
+
+    <label for="cContent">C-content (%):</label>
+    <input type="number" step="any" id="cContent" required />
+
+    <label for="hCRatio">H/C Ratio:</label>
+    <input type="number" step="any" id="hCRatio" required />
+
+    <label for="matrix">Matrix (e.g., compost, manure, feed, cement):</label>
+    <input type="text" id="matrix" required />
+
+    <label for="gps">GPS Location of the C-sink:</label>
+    <input type="text" id="gps" placeholder="Latitude, Longitude" readonly required />
+    <button type="button" class="get-location" onclick="getLocation()">Get Current Location</button>
+
+    <label for="amount">Amount of Biochar Applied (dry matter tons):</label>
+    <input type="number" step="any" id="amount" required />
+
+    <label for="applyDate">Date of Application:</label>
+    <input type="date" id="applyDate" required />
+
+    <label for="feedback">User Feedback:</label>
+    <textarea id="feedback" rows="4" placeholder="Any additional comments..."></textarea>
+
+    <button type="submit">Submit Data</button>
+  </form>
+
+  <script>
+    // --- Firebase Configuration ---
+    // Replace these configuration details with your Firebase project's configuration.
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // --- GPS Location Capture ---
+    function getLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(showPosition, showError);
+      } else {
+        alert("Geolocation is not supported by this browser.");
+      }
+    }
+
+    function showPosition(position) {
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+      document.getElementById("gps").value = latitude.toFixed(6) + ", " + longitude.toFixed(6);
+    }
+
+    function showError(error) {
+      alert("Error obtaining location: " + error.message);
+    }
+
+    // --- Form Submission ---
+    document.getElementById("farmForm").addEventListener("submit", function(event) {
+      event.preventDefault();
+      
+      // Create an object with the form data
+      const formData = {
+        feedstock: document.getElementById("feedstock").value,
+        technology: document.getElementById("technology").value,
+        productionDate: document.getElementById("prodDate").value,
+        cContent: parseFloat(document.getElementById("cContent").value),
+        hCRatio: parseFloat(document.getElementById("hCRatio").value),
+        matrix: document.getElementById("matrix").value,
+        gps: document.getElementById("gps").value,
+        amount: parseFloat(document.getElementById("amount").value),
+        applicationDate: document.getElementById("applyDate").value,
+        feedback: document.getElementById("feedback").value,
+        timestamp: new Date().toISOString()
+      };
+
+      // Save the data to Firestore
+      db.collection("farmData").add(formData)
+        .then((docRef) => {
+          alert("Data submitted successfully! Document ID: " + docRef.id);
+          document.getElementById("farmForm").reset();
+        })
+        .catch((error) => {
+          console.error("Error adding document: ", error);
+          alert("Error submitting data. Please try again.");
+        });
+    });
+  </script>
+</body>
+</html>
